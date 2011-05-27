@@ -1,20 +1,26 @@
 class Node
 
   class << self
-    def create_nodes(data, similarity_measure)
+    def create_nodes(data, counts, similarity_measure)
       nodes = []
-      data.each do |position|
-        nodes << new(position, similarity_measure)
+      
+      data.each_with_index do |position, i|
+      	if counts.nil?
+        	nodes << new(position, 1, similarity_measure) #Assume count is 1 if not specified
+        else
+        	nodes << new(position, counts[i], similarity_measure) #Count is present, use it
+    	end 
       end
       nodes
     end
   end
 
-  attr_accessor :position, :best_distance, :closest_centroid
+  attr_accessor :position, :best_distance, :closest_centroid, :count
 
-  def initialize(position, similarity_measure)
+  def initialize(position, count, similarity_measure)
     @position = position
     @similarity_measure = similarity_measure
+    @count = count
   end
 
   def update_closest_centroid(centroids)
