@@ -41,7 +41,7 @@ class KMeans
   	
   	centroids = []
   	
-  	num_iterations = options[:custom_centroids].nil? ? 8 : 1
+  	num_iterations = options[:custom_centroids].nil? ? 100 : 1
   	
   	for i in 1..num_iterations
 	    iterations, updates = 0, 1
@@ -54,6 +54,8 @@ class KMeans
 	      reposition_centroids
 	    end
 	    
+	    iterations = 0
+	    
 	    if updates > 0
 	      puts "K-Means did not converge! Continuing with finding quality anyway"
 	    end
@@ -61,14 +63,16 @@ class KMeans
 	    quality = davies_bouldin_index(@centroids)
 	    unless quality == 1.0/0
 	    	centroids << {:centroids => @centroids.dup, :db_index => quality}
-	    	puts "#{davies_bouldin_index(@centroids)} with #{@centroids.length} clusters"
+	    	#puts "#{davies_bouldin_index(@centroids)} with #{@centroids.length} clusters"
 	    else
 	    	puts "Redoing iteration because quality is too low"
 	    	redo
 	    end
 	    #For next iteration
 	    @centroids = options[:custom_centroids] ||
-      		Centroid.create_centroids(options[:centroids] || 4, @nodes) 
+      		Centroid.create_centroids(options[:centroids] || 4, @nodes)
+      		
+      	print '.' if i % 5 == 0 
    	end
    	
    	@centroids = (centroids.min_by {|c| c[:db_index]})[:centroids]
@@ -81,6 +85,7 @@ class KMeans
   	num_centroids = centroids.length
   	
   	db_index = 0
+  	mean_node_exponent = 2
   	
   	non_empty_cluster_indexes = []
   	centroids.each_with_index do |centroid, index|
@@ -96,7 +101,7 @@ class KMeans
   		non_empty_cluster_indexes.each do |j|
   			next if i == j
   			centroid_dist = centroids[i].position.send(@distance_measure, centroids[j].position)
-  			sum_mean_nodes = centroids[i].mean_node_distance + centroids[j].mean_node_distance
+  			sum_mean_nodes = (centroids[i].mean_node_distance + centroids[j].mean_node_distance) ** mean_node_exponent
   			#puts "#{centroid_dist}, #{sum_mean_nodes}" if sum_mean_nodes < 0 || centroid_dist < 0
   			
   			#sum_mean_nodes is less than zero if either cluster doesn't have assigned nodes. In that case, skip?
